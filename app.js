@@ -1,9 +1,4 @@
 // const tf = require('@tensorflow/tfjs-node');
-// const express = require('express');
-// const app = express();
-// const model = tf.loadLayersModel('./model.json');
-// const img = document.getElementById('img');
-
 const express = require("express"),
     http = require("http"),
     cors = require("cors"),
@@ -22,10 +17,8 @@ app.use(static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname + '/uploads'));
 
 app.get("/", function (req, res) {
-    //console.log("index call")
     res.render("index");
 })
-
 
 let storage = multer.diskStorage({
     destination: function(req, file, callback){
@@ -45,8 +38,6 @@ app.post('/uploadimage', upload.single("imgfile"), (req, res, next) =>
     let file = req.file;
  
     console.log("접속함");
-    
-    
 
     // res.json({
     //     success: true,

@@ -1,8 +1,4 @@
-// const tf = require('@tensorflow/tfjs-node');
-// const express = require('express');
-// const app = express();
-// const model = tf.loadLayersModel('./model.json');
-// const img = document.getElementById('img');
+// const tf = require('@tensorflow/tfjs');
 
 const express = require("express"),
     http = require("http"),
@@ -21,20 +17,7 @@ app.use('/', router);
 app.use(static(path.join(__dirname, 'public')));
 
 app.get("/", function (req, res) {
-
-    tf.loadLayersModel('./model.json').then(function (model) {
-
-        console.log("app2.js 실행");
-        var img = new Image();
-        img.src = './cat16.png';
-        // img = tf.browser.fromPixels(di).div(255);
-        img = tf.image.resizeBilinear(img, [224, 224])
-        img = tf.expandDims(img, 0)
-        // img = tf.process_input(img) / 255; //
-        const prediction = model.predict(img);
-        const predictionArray = prediction.dataSync()
-        console.log(predictionArray);
-    });
+    res.render("index.html");
 })
 
 
