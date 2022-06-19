@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+
+    <img id="img" src="./dog16.jpg"></img>
+    <script>
+        let di = document.getElementById('img');
+
+        tf.loadLayersModel('./model.json').then(function (model) {
+
+
+            img = tf.browser.fromPixels(di).div(255);
+            img = tf.image.resizeBilinear(img, [224, 224])
+            img = tf.expandDims(img, 0)
+            // img = tf.process_input(img) / 255; //
+            const prediction = model.predict(img);
+            const predictionArray = prediction.dataSync()
+            console.log(predictionArray);
+        });
+    </script>
+    <!-- <script src="app.js"></script> -->
+</body>
+
+</html>
