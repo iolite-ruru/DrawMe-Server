@@ -9,10 +9,11 @@ tf.loadLayersModel('./model.json').then(function (model) {
     // var img = new Image();
     // img.src = './cat16.png';
     
-    img = tf.image.resizeBilinear(img, [224, 224])
-    img = tf.expandDims(img, 0)
+    img = tf.image.resizeBilinear(img, [224, 224]);
+    img = tf.expandDims(img, 0);
     // img = tf.process_input(img) / 255; //
     const prediction = model.predict(img);
     const predictionArray = prediction.dataSync()
     console.log(predictionArray);
+    //console.log(predictionArray[0]);
 });

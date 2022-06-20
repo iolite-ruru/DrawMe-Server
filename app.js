@@ -1,4 +1,15 @@
-// const tf = require('@tensorflow/tfjs-node');
+/*
+0. alien
+1. crab
+2. dog
+3. fish
+4. jellyfish
+5. monkey
+6. sheep
+7. snake
+*/
+
+const tf = require('@tensorflow/tfjs');
 const express = require("express"),
     http = require("http"),
     cors = require("cors"),
@@ -8,7 +19,10 @@ const express = require("express"),
     static = require('serve-static'),
     router = express.Router(),
     app = express();
+    //const withImages = require('next-images');
 
+// app.use(withImages());
+// module.exports = withImages();
 app.set('port', process.env.PORT || 3000);
 app.use(express.json());
 app.use(cors());
@@ -21,10 +35,10 @@ app.get("/", function (req, res) {
 })
 
 let storage = multer.diskStorage({
-    destination: function(req, file, callback){
+    destination: function (req, file, callback) {
         callback(null, "uploads/");
     },
-    filename: function(req, file, callback){
+    filename: function (req, file, callback) {
         callback(null, file.originalname);
     }
 });
@@ -33,18 +47,44 @@ let upload = multer({
     storage: storage
 });
 
-app.post('/uploadimage', upload.single("imgfile"), (req, res, next) =>
-{
-    let file = req.file;
- 
-    console.log("접속함");
 
-    // res.json({
-    //     success: true,
-    //     imageurl: `http://localhost:3000/uploads/'${req.filename}'`
-    // });
+let accuracy = -1;
+
+app.post('/uploadimage', upload.single("imgfile"), (req, res, next) => {
+    let file = req.file;
+    console.log("file:::"+file);
+    console.log("file:::"+file.filename);
+    console.log("/uploadimage 호출");
+    
+    tf.loadLayersModel('./model.json').then(function (model) {
+        console.log("model.js 실행");
+        let di = document.getElementById('img');
+        let img = tf.browser.fromPixels(file).div(255);
+
+        // var img = new Image();
+        // img.src = './cat16.png';
+        
+        img = tf.image.resizeBilinear(img, [224, 224]);
+        img = tf.expandDims(img, 0);
+        // img = tf.process_input(img) / 255; //
+        const prediction = model.predict(img);
+        const predictionArray = prediction.dataSync()
+        console.log(predictionArray);
+        accuracy = predictionArray[0];
+        //console.log(predictionArray[0]);
+    });
+    /*
+        res.json({
+            success: true,
+            imageurl: `http://localhost:3000/uploads/'${req.filename}'`
+        });
+    */
 });
 
+app.get('/accuracy', (req, res, next) => {
+    console.log("/accuracy 호출");
+    console.log("accuracy: "+accuracy);
+});
 
 http.createServer(app).listen(app.get('port'), function () {
     console.log('Express server listening on port ' + app.get('port'));
