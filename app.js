@@ -19,10 +19,11 @@ const express = require("express"),
     static = require('serve-static'),
     router = express.Router(),
     app = express();
-    //const withImages = require('next-images');
+    // require('@tensorflow/tfjs-node');
+const tfNodeBackend = require('@tensorflow/tfjs-node-backend');
 
-// app.use(withImages());
-// module.exports = withImages();
+tf.setBackend(tfNodeBackend);
+
 app.set('port', process.env.PORT || 3000);
 app.use(express.json());
 app.use(cors());
@@ -52,33 +53,30 @@ let accuracy = -1;
 
 app.post('/uploadimage', upload.single("imgfile"), (req, res, next) => {
     let file = req.file;
-    console.log("file:::"+file);
-    console.log("file:::"+file.filename);
+    console.log(":::file = "+file.filename);
     console.log("/uploadimage 호출");
-    
+
     tf.loadLayersModel('./model.json').then(function (model) {
         console.log("model.js 실행");
-        let di = document.getElementById('img');
-        let img = tf.browser.fromPixels(file).div(255);
 
-        // var img = new Image();
-        // img.src = './cat16.png';
+        //let image
+        
+        //let img = tf.browser.fromPixels(di).div(255);
+
+        var img = new Image();
+        img.src = '../uploads/'+file.filename;
+        console.log(img.src);
         
         img = tf.image.resizeBilinear(img, [224, 224]);
         img = tf.expandDims(img, 0);
-        // img = tf.process_input(img) / 255; //
+        // img = tf.process_input(img) / 255;
         const prediction = model.predict(img);
         const predictionArray = prediction.dataSync()
         console.log(predictionArray);
         accuracy = predictionArray[0];
         //console.log(predictionArray[0]);
     });
-    /*
-        res.json({
-            success: true,
-            imageurl: `http://localhost:3000/uploads/'${req.filename}'`
-        });
-    */
+    res.render("index");
 });
 
 app.get('/accuracy', (req, res, next) => {
