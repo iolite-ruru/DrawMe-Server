@@ -9,7 +9,7 @@
 7. snake
 */
 
-const tf = require('@tensorflow/tfjs');
+const tf = require('@tensorflow/tfjs-node');
 const express = require("express"),
     http = require("http"),
     cors = require("cors"),
@@ -19,10 +19,6 @@ const express = require("express"),
     static = require('serve-static'),
     router = express.Router(),
     app = express();
-    // require('@tensorflow/tfjs-node');
-const tfNodeBackend = require('@tensorflow/tfjs-node-backend');
-
-tf.setBackend(tfNodeBackend);
 
 app.set('port', process.env.PORT || 3000);
 app.use(express.json());
@@ -32,7 +28,7 @@ app.use(static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname + '/uploads'));
 
 app.get("/", function (req, res) {
-    res.render("index");
+    // res.render("index");
 })
 
 let storage = multer.diskStorage({
@@ -45,46 +41,72 @@ let storage = multer.diskStorage({
 });
 
 let upload = multer({
-    storage: storage
+    storage: storage,
 });
 
-
 let accuracy = -1;
+let accuracyIdx = -1;
+let type = null;
 
 app.post('/uploadimage', upload.single("imgfile"), (req, res, next) => {
     let file = req.file;
-    console.log(":::file = "+file.filename);
-    console.log("/uploadimage 호출");
+    let customer = req.body.customer;
+    console.log("req.params: "+req.params);
+    console.dir(req.body);
 
-    tf.loadLayersModel('./model.json').then(function (model) {
+    // console.log("/uploadimage 호출");
+    // console.log("file: " + file.filename);
+    //console.log("file.mimetype: " + file.mimetype); // image/png
+
+    tf.loadLayersModel('file://public/model.json').then(function (model) {
         console.log("model.js 실행");
 
-        //let image
-        
         //let img = tf.browser.fromPixels(di).div(255);
 
-        var img = new Image();
-        img.src = '../uploads/'+file.filename;
-        console.log(img.src);
-        
+        let filePath = __dirname + '/uploads/' + file.filename;
+
+        let imgBuffer = fs.readFileSync(filePath);
+        let img = tf.node.decodeImage(imgBuffer);
+
         img = tf.image.resizeBilinear(img, [224, 224]);
         img = tf.expandDims(img, 0);
-        // img = tf.process_input(img) / 255;
-        const prediction = model.predict(img);
-        const predictionArray = prediction.dataSync()
-        console.log(predictionArray);
-        accuracy = predictionArray[0];
-        //console.log(predictionArray[0]);
-    });
-    res.render("index");
-});
+        // img = tf.process_input(img);
+        let prediction = model.predict(img);
+        let predictionArray = prediction.dataSync();
+        console.log("predictionArray: " + predictionArray);
+        
+        console.log(customer);
+        switch(customer){
+            case "alien":
+                accuracyIdx = 0; break;
+            case "crab":
+                accuracyIdx = 1; break;
+            case "dog":
+                accuracyIdx = 2; break;
+            case "fish":
+                accuracyIdx = 3; break;
+            case "jellyfish":
+                accuracyIdx = 4; break;
+            case "monkey":
+                accuracyIdx = 5; break;
+            case "sheep":
+                accuracyIdx = 6; break;
+            case "snake":
+                accuracyIdx = 7; break;
+            default: accuracyIdx = -1;
+        }
 
-app.get('/accuracy', (req, res, next) => {
-    console.log("/accuracy 호출");
-    console.log("accuracy: "+accuracy);
+        // accuracy = predictionArray[0]/255;
+        accuracy = predictionArray[accuracyIdx]/255;
+        console.log("accuracy: " + accuracy);
+    });
+    
+    res.json({
+        success: true,
+        acc: accuracy
+    });
 });
 
 http.createServer(app).listen(app.get('port'), function () {
     console.log('Express server listening on port ' + app.get('port'));
 });
-
