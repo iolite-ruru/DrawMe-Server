@@ -9,6 +9,7 @@
 7. snake
 */
 
+const { tensor } = require('@tensorflow/tfjs-node');
 const tf = require('@tensorflow/tfjs-node');
 const express = require("express"),
     http = require("http"),
@@ -51,7 +52,7 @@ let type = null;
 app.post('/uploadimage', upload.single("imgfile"), (req, res, next) => {
     let file = req.file;
     let customer = req.body.customer;
-    console.log("req.params: "+req.params);
+    // console.log("req.params: "+req.params);
     console.dir(req.body);
 
     // console.log("/uploadimage 호출");
@@ -60,18 +61,21 @@ app.post('/uploadimage', upload.single("imgfile"), (req, res, next) => {
 
     tf.loadLayersModel('file://public/model.json').then(function (model) {
         console.log("model.js 실행");
-
-        //let img = tf.browser.fromPixels(di).div(255);
-
         let filePath = __dirname + '/uploads/' + file.filename;
 
         let imgBuffer = fs.readFileSync(filePath);
         let img = tf.node.decodeImage(imgBuffer);
+        img = tf.image.resizeBilinear(img, [224, 224]); //img_array = image.img_to_array(img) 역할
+        img = tf.expandDims(img, 0); //img_batch = np.expand_dims(img_array, axis=0) 역할
+        console.log("img:"+img);
 
-        img = tf.image.resizeBilinear(img, [224, 224]);
-        img = tf.expandDims(img, 0);
-        // img = tf.process_input(img);
+        // let te = tf.tensor(img/255);//img/255; //*********
+        // console.log("te:"+te); //NaN
+
+        console.log("/255: "+(img/255.0)); //NaN
+
         let prediction = model.predict(img);
+        console.log("prediction:"+ prediction);
         let predictionArray = prediction.dataSync();
         console.log("predictionArray: " + predictionArray);
         
@@ -95,15 +99,15 @@ app.post('/uploadimage', upload.single("imgfile"), (req, res, next) => {
                 accuracyIdx = 7; break;
             default: accuracyIdx = -1;
         }
-
-        // accuracy = predictionArray[0]/255;
-        accuracy = predictionArray[accuracyIdx]/255;
+        
+        // accuracy = prediction[accuracyIdx];
+        accuracy = predictionArray[accuracyIdx];
         console.log("accuracy: " + accuracy);
     });
     
     res.json({
         success: true,
-        acc: accuracy
+        acc: 0.5678//accuracy
     });
 });
 
