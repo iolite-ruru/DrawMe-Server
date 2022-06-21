@@ -31,7 +31,9 @@ app.use(express.json());
 app.use(cors());
 app.use('/', router);
 app.use(static(path.join(__dirname, 'public')));
-app.use(express.static(__dirname + '/uploads'));
+// app.use(express.static(__dirname + '/uploads'));
+app.use('/uploads', express.static(__dirname + '/uploads'))
+
 
 app.get("/", function (req, res) {
     // res.render("index");
@@ -53,19 +55,23 @@ let upload = multer({
 let accuracy = -1;
 let accuracyIdx = -1;
 
+
 app.post('/uploadimage', upload.single("imgfile"), async (req, res, next) => {
-    let filePath = __dirname + "/uploads/animal6.png";// + req.file;
+    //"http://localhost:3000/uploads/animal6.jpg"
+    let file = req.file;
+    let filePath = "http://localhost:3000/uploads/"+file.filename;//__dirname + "/uploads/animal6.png";// + req.file;
     let customer = req.body.customer;
 
     return model.classify({
         imageUrl: filePath,
     }).then((predictions) => {
+        console.log("===predictions===");
         console.log(predictions);
 
         //switch
 
         accuracyIdx = 1;
-        accuracy = predictions[accuracyIdx].probability;
+        accuracy = predictions[accuracyIdx].score;
         console.log("accuracy: " + accuracy);
 
         return res.json({
