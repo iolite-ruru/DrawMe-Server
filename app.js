@@ -22,8 +22,9 @@ const express = require("express"),
     router = express.Router(),
     app = express();
 
+//"https://teachablemachine.withgoogle.com/models/r6BBk-hiN/"
 const model = new TeachableMachine({
-    modelUrl: "https://teachablemachine.withgoogle.com/models/r6BBk-hiN/"
+    modelUrl: "https://teachablemachine.withgoogle.com/models/mikP01Kp6/" 
 });
 
 app.set('port', process.env.PORT || 3000);
@@ -61,6 +62,7 @@ app.post('/uploadimage', upload.single("imgfile"), async (req, res, next) => {
     let file = req.file;
     let filePath = "http://localhost:3000/uploads/"+file.filename;//__dirname + "/uploads/animal6.png";// + req.file;
     let customer = req.body.customer;
+    console.log("customer = "+customer);
 
     return model.classify({
         imageUrl: filePath,
@@ -68,10 +70,14 @@ app.post('/uploadimage', upload.single("imgfile"), async (req, res, next) => {
         console.log("===predictions===");
         console.log(predictions);
 
-        //switch
+        for (let i = 0; i < 8; i++) {
+            console.log("predictions[i].class: "+predictions[i].class);
+            if(predictions[i].class == customer){
+                accuracy = predictions[i].score;
+                break;
+            }
+        }
 
-        accuracyIdx = 1;
-        accuracy = predictions[accuracyIdx].score;
         console.log("accuracy: " + accuracy);
 
         return res.json({
@@ -90,26 +96,3 @@ app.post('/uploadimage', upload.single("imgfile"), async (req, res, next) => {
 http.createServer(app).listen(app.get('port'), function () {
     console.log('Express server listening on port ' + app.get('port'));
 });
-
-
-/*
-switch (customer) {
-    case "alien":
-        accuracyIdx = 0; break;
-    case "crab":
-        accuracyIdx = 1; break;
-    case "dog":
-        accuracyIdx = 2; break;
-    case "fish":
-        accuracyIdx = 3; break;
-    case "jellyfish":
-        accuracyIdx = 4; break;
-    case "monkey":
-        accuracyIdx = 5; break;
-    case "sheep":
-        accuracyIdx = 6; break;
-    case "snake":
-        accuracyIdx = 7; break;
-    default: accuracyIdx = -1;
-}
-*/
