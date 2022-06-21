@@ -9,8 +9,9 @@
 7. snake
 */
 
-const { tensor } = require('@tensorflow/tfjs-node');
-const tf = require('@tensorflow/tfjs-node');
+const TeachableMachine = require("@sashido/teachablemachine-node");
+// const { tensor } = require('@tensorflow/tfjs-node');
+// const tf = require('@tensorflow/tfjs-node');
 const express = require("express"),
     http = require("http"),
     cors = require("cors"),
@@ -20,6 +21,10 @@ const express = require("express"),
     static = require('serve-static'),
     router = express.Router(),
     app = express();
+
+const model = new TeachableMachine({
+    modelUrl: "https://teachablemachine.withgoogle.com/models/r6BBk-hiN/"
+});
 
 app.set('port', process.env.PORT || 3000);
 app.use(express.json());
@@ -47,70 +52,58 @@ let upload = multer({
 
 let accuracy = -1;
 let accuracyIdx = -1;
-let type = null;
 
-app.post('/uploadimage', upload.single("imgfile"), (req, res, next) => {
-    let file = req.file;
+app.post('/uploadimage', upload.single("imgfile"), async (req, res, next) => {
+    let filePath = __dirname + "/uploads/animal6.png";// + req.file;
     let customer = req.body.customer;
-    // console.log("req.params: "+req.params);
-    console.dir(req.body);
 
-    // console.log("/uploadimage 호출");
-    // console.log("file: " + file.filename);
-    //console.log("file.mimetype: " + file.mimetype); // image/png
+    return model.classify({
+        imageUrl: filePath,
+    }).then((predictions) => {
+        console.log(predictions);
 
-    tf.loadLayersModel('file://public/model.json').then(function (model) {
-        console.log("model.js 실행");
-        let filePath = __dirname + '/uploads/' + file.filename;
+        //switch
 
-        let imgBuffer = fs.readFileSync(filePath);
-        let img = tf.node.decodeImage(imgBuffer);
-        img = tf.image.resizeBilinear(img, [224, 224]); //img_array = image.img_to_array(img) 역할
-        img = tf.expandDims(img, 0); //img_batch = np.expand_dims(img_array, axis=0) 역할
-        console.log("img:"+img);
-
-        // let te = tf.tensor(img/255);//img/255; //*********
-        // console.log("te:"+te); //NaN
-
-        console.log("/255: "+(img/255.0)); //NaN
-
-        let prediction = model.predict(img);
-        console.log("prediction:"+ prediction);
-        let predictionArray = prediction.dataSync();
-        console.log("predictionArray: " + predictionArray);
-        
-        console.log(customer);
-        switch(customer){
-            case "alien":
-                accuracyIdx = 0; break;
-            case "crab":
-                accuracyIdx = 1; break;
-            case "dog":
-                accuracyIdx = 2; break;
-            case "fish":
-                accuracyIdx = 3; break;
-            case "jellyfish":
-                accuracyIdx = 4; break;
-            case "monkey":
-                accuracyIdx = 5; break;
-            case "sheep":
-                accuracyIdx = 6; break;
-            case "snake":
-                accuracyIdx = 7; break;
-            default: accuracyIdx = -1;
-        }
-        
-        // accuracy = prediction[accuracyIdx];
-        accuracy = predictionArray[accuracyIdx];
+        accuracyIdx = 1;
+        accuracy = predictions[accuracyIdx].probability;
         console.log("accuracy: " + accuracy);
-    });
-    
-    res.json({
-        success: true,
-        acc: 0.5678//accuracy
+
+        return res.json({
+            success: true,
+            acc: accuracy
+        });
+
+        //return res.json(predictions);
+
+    }).catch((e) => {
+        console.error(e);
+        res.status(500).send("Something went wrong!")
     });
 });
 
 http.createServer(app).listen(app.get('port'), function () {
     console.log('Express server listening on port ' + app.get('port'));
 });
+
+
+/*
+switch (customer) {
+    case "alien":
+        accuracyIdx = 0; break;
+    case "crab":
+        accuracyIdx = 1; break;
+    case "dog":
+        accuracyIdx = 2; break;
+    case "fish":
+        accuracyIdx = 3; break;
+    case "jellyfish":
+        accuracyIdx = 4; break;
+    case "monkey":
+        accuracyIdx = 5; break;
+    case "sheep":
+        accuracyIdx = 6; break;
+    case "snake":
+        accuracyIdx = 7; break;
+    default: accuracyIdx = -1;
+}
+*/

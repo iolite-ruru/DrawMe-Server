@@ -4,6 +4,7 @@
   "description": "draw me",
   "main": "app.js",
   "dependencies": {
+    "@sashido/teachablemachine-node": "^1.2.2",
     "@tensorflow/tfjs": "^3.18.0",
     "@tensorflow/tfjs-core": "^3.18.0",
     "@tensorflow/tfjs-node": "^3.18.0",
